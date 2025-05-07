@@ -13,9 +13,9 @@ app.use(cors());
 app.use(express.json());
 
 // Environment variables
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY || 'shFCjVUeKwnDT5FJTSAI';
+const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL';
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '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';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 // Store conversation history
 let conversationHistory = [];
