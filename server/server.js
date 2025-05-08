@@ -214,6 +214,9 @@ app.get('/api/check-env', (req, res) => {
   // Test endpoint for Anthropic API without RAG
   app.get('/api/test-anthropic', async (req, res) => {
     try {
+      // Log the key format without revealing the entire key
+      console.log('Testing Anthropic API with key prefix:', ANTHROPIC_API_KEY.substring(0, 10) + '...');
+      
       const response = await axios({
         method: 'post',
         url: 'https://api.anthropic.com/v1/messages',
@@ -223,7 +226,7 @@ app.get('/api/check-env', (req, res) => {
           'x-api-key': ANTHROPIC_API_KEY
         },
         data: {
-          model: "claude-3-sonnet-20240229",
+          model: "claude-3-haiku-20240307", // Try a different model
           max_tokens: 150,
           messages: [
             { role: "user", content: "Hello, Claude! Please respond with a short greeting." }
@@ -242,11 +245,29 @@ app.get('/api/check-env', (req, res) => {
         error: error.message,
         response: error.response ? error.response.data : null,
         status: error.response ? error.response.status : null,
-        apiKeyStartsWith: ANTHROPIC_API_KEY.substring(0, 10) + "..."
+        apiKeyStartsWith: ANTHROPIC_API_KEY.substring(0, 10) + "...",
+        apiKeyLength: ANTHROPIC_API_KEY.length
       });
     }
   });
+
+  app.get('/api/debug-key', (req, res) => {
+    if (!ANTHROPIC_API_KEY) {
+      return res.json({ error: "No API key set" });
+    }
+    
+    const maskedKey = ANTHROPIC_API_KEY.substring(0, 10) + '...' + ANTHROPIC_API_KEY.substring(ANTHROPIC_API_KEY.length - 4);
+    
+    res.json({
+      keyStart: ANTHROPIC_API_KEY.substring(0, 10),
+      keyEnd: ANTHROPIC_API_KEY.substring(ANTHROPIC_API_KEY.length - 4),
+      keyLength: ANTHROPIC_API_KEY.length,
+      containsNewline: ANTHROPIC_API_KEY.includes('\n'),
+      containsSpace: ANTHROPIC_API_KEY.includes(' ')
+    });
+  });
 //   end testing endpoints, delete later
+
 
 // Text chat endpoint
 app.post('/api/text-chat', async (req, res) => {
@@ -395,6 +416,60 @@ app.get('/api/test', (req, res) => {
         }
     });
 });
+
+// Simple API key debug endpoint
+app.get('/api/debug-key', (req, res) => {
+    if (!ANTHROPIC_API_KEY) {
+      return res.json({ error: "No API key set" });
+    }
+    
+    res.json({
+      keyStart: ANTHROPIC_API_KEY.substring(0, 10),
+      keyEnd: ANTHROPIC_API_KEY.substring(ANTHROPIC_API_KEY.length - 4),
+      keyLength: ANTHROPIC_API_KEY.length,
+      containsNewline: ANTHROPIC_API_KEY.includes('\n'),
+      containsSpace: ANTHROPIC_API_KEY.includes(' ')
+    });
+  });
+  
+  // Updated Anthropic API test endpoint
+  app.get('/api/test-anthropic-haiku', async (req, res) => {
+    try {
+      console.log('Testing Anthropic API with haiku model...');
+      
+      const response = await axios({
+        method: 'post',
+        url: 'https://api.anthropic.com/v1/messages',
+        headers: {
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01',
+          'x-api-key': ANTHROPIC_API_KEY
+        },
+        data: {
+          model: "claude-3-haiku-20240307", // Using a different model
+          max_tokens: 150,
+          messages: [
+            { role: "user", content: "Hello, Claude! Please respond with a short greeting." }
+          ]
+        }
+      });
+      
+      res.json({
+        success: true, 
+        response: response.data.content[0].text,
+        apiKeyStartsWith: ANTHROPIC_API_KEY.substring(0, 10) + "..."
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        response: error.response ? error.response.data : null,
+        status: error.response ? error.response.status : null,
+        apiKeyStartsWith: ANTHROPIC_API_KEY.substring(0, 10) + "...",
+        apiKeyLength: ANTHROPIC_API_KEY.length
+      });
+    }
+  });
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
