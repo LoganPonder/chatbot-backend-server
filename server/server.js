@@ -198,6 +198,56 @@ except Exception as e:
     });
 }
 
+// Test endpoint for environment variables, delete later
+app.get('/api/check-env', (req, res) => {
+    res.json({
+      environmentVariables: {
+        ANTHROPIC_API_KEY_SET: !!ANTHROPIC_API_KEY,
+        ANTHROPIC_API_KEY_LENGTH: ANTHROPIC_API_KEY ? ANTHROPIC_API_KEY.length : 0,
+        ANTHROPIC_API_KEY_PREFIX: ANTHROPIC_API_KEY ? ANTHROPIC_API_KEY.substring(0, 10) + "..." : null,
+        ELEVENLABS_API_KEY_SET: !!ELEVENLABS_API_KEY,
+        ELEVENLABS_VOICE_ID_SET: !!ELEVENLABS_VOICE_ID
+      }
+    });
+  });
+  
+  // Test endpoint for Anthropic API without RAG
+  app.get('/api/test-anthropic', async (req, res) => {
+    try {
+      const response = await axios({
+        method: 'post',
+        url: 'https://api.anthropic.com/v1/messages',
+        headers: {
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01',
+          'x-api-key': ANTHROPIC_API_KEY
+        },
+        data: {
+          model: "claude-3-sonnet-20240229",
+          max_tokens: 150,
+          messages: [
+            { role: "user", content: "Hello, Claude! Please respond with a short greeting." }
+          ]
+        }
+      });
+      
+      res.json({
+        success: true, 
+        response: response.data.content[0].text,
+        apiKeyStartsWith: ANTHROPIC_API_KEY.substring(0, 10) + "..."
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        response: error.response ? error.response.data : null,
+        status: error.response ? error.response.status : null,
+        apiKeyStartsWith: ANTHROPIC_API_KEY.substring(0, 10) + "..."
+      });
+    }
+  });
+//   end testing endpoints, delete later
+
 // Text chat endpoint
 app.post('/api/text-chat', async (req, res) => {
     try {
